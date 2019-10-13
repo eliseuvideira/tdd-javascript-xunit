@@ -5,6 +5,7 @@
  **  Invoke tearDown even if the test method fails
  **  Run multiple tests
  **  Report collected results
+ **  [X] Log string in WasRun
  */
 class TestCase {
   public name: string;
@@ -15,27 +16,37 @@ class TestCase {
   public run(): void {
     this.setUp();
     this[this.name]();
+    this.tearDown();
   }
 
+  // tslint:disable-next-line: no-empty
   public setUp(): void {}
+
+  // tslint:disable-next-line: no-empty
+  public tearDown(): void {}
 }
 
 // tslint:disable-next-line: max-classes-per-file
 class WasRun extends TestCase {
   public wasRun: boolean;
-  public wasSetUp: boolean;
+  public log: string;
 
   constructor(name: string) {
     super(name);
   }
 
-  public testMethod(): void {
-    this.wasRun = true;
-  }
-
   public setUp(): void {
     this.wasRun = false;
-    this.wasSetUp = true;
+    this.log = 'setUp';
+  }
+
+  public testMethod(): void {
+    this.wasRun = true;
+    this.log = this.log + ' testMethod';
+  }
+
+  public tearDown(): void {
+    this.log = this.log + ' tearDown';
   }
 }
 
@@ -43,18 +54,10 @@ class WasRun extends TestCase {
 class TestCaseTest extends TestCase {
   private test: WasRun;
 
-  public setUp(): void {
+  public testTemplateMethod(): void {
     this.test = new WasRun('testMethod');
-  }
-
-  public testRunning(): void {
     this.test.run();
-    this.assert(this.test.wasRun);
-  }
-
-  public testSetUp(): void {
-    this.test.run();
-    this.assert(this.test.wasSetUp);
+    this.assert('setUp testMethod tearDown' === this.test.log);
   }
 
   private assert(value: boolean): void {
@@ -66,5 +69,4 @@ class TestCaseTest extends TestCase {
   }
 }
 
-new TestCaseTest('testRunning').run();
-new TestCaseTest('testSetUp').run();
+new TestCaseTest('testTemplateMethod').run();
