@@ -6,23 +6,30 @@
  **  Run multiple tests
  **  Report collected results
  **  [X] Log string in WasRun
- **  Report failed tests
+ **  [X] Report failed tests
+ **  Catch and report setUp errors
  */
 // tslint:disable: max-classes-per-file
 
 class TestResult {
   private runCount: number;
+  private errorCount: number;
 
   constructor() {
     this.runCount = 0;
+    this.errorCount = 0;
   }
 
   public testStarted(): void {
     this.runCount += 1;
   }
 
+  public testFailed(): void {
+    this.errorCount += 1;
+  }
+
   public summary(): string {
-    return `${this.runCount} run, 0 failed`;
+    return `${this.runCount} run, ${this.errorCount} failed`;
   }
 }
 
@@ -36,7 +43,11 @@ class TestCase {
     const result = new TestResult();
     result.testStarted();
     this.setUp();
-    this[this.name]();
+    try {
+      this[this.name]();
+    } catch (err) {
+      result.testFailed();
+    }
     this.tearDown();
 
     return result;
@@ -89,6 +100,13 @@ class TestCaseTest extends TestCase {
     this.assert('1 run, 1 failed' === result.summary());
   }
 
+  public testFailedResultsFormatting() {
+    const result = new TestResult();
+    result.testStarted();
+    result.testFailed();
+    this.assert('1 run, 1 failed' === result.summary());
+  }
+
   public testResult(): void {
     const test = new WasRun('testMethod');
     const result = test.run();
@@ -104,6 +122,8 @@ class TestCaseTest extends TestCase {
   }
 }
 
-new TestCaseTest('testTemplateMethod').run();
-new TestCaseTest('testResult').run();
-new TestCaseTest('testFailedResults').run();
+Reflect.ownKeys(TestCaseTest.prototype)
+  .filter((key: string) => /^test/.test(key as string))
+  .forEach((method: string) => {
+    new TestCaseTest(method).run();
+  });
