@@ -6,8 +6,7 @@ class TestCase {
     this.name = name;
   }
 
-  public run(): TestResult {
-    const result = new TestResult();
+  public run(result: TestResult): void {
     result.testStarted();
     this.setUp();
     try {
@@ -16,8 +15,6 @@ class TestCase {
       result.testFailed();
     }
     this.tearDown();
-
-    return result;
   }
 
   // tslint:disable-next-line: no-empty
