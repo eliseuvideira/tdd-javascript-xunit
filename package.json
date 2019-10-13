@@ -15,6 +15,6 @@
   },
   "scripts": {
     "build": "tsc",
-    "start": "node_modules/.bin/nodemon src/app.ts"
+    "start": "node_modules/.bin/nodemon src/__tests__/app.test.ts"
   }
 }
