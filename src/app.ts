@@ -1,6 +1,6 @@
 /* TODO
  **  [X] Invoke test method
- **  Invoke setUp first
+ **  [X] Invoke setUp first
  **  Invoke tearDown afterward
  **  Invoke tearDown even if the test method fails
  **  Run multiple tests
@@ -8,42 +8,63 @@
  */
 class TestCase {
   public name: string;
-  constructor(name) {
+  constructor(name: string) {
     this.name = name;
   }
 
-  run(): void {
+  public run(): void {
+    this.setUp();
     this[this.name]();
   }
+
+  public setUp(): void {}
 }
 
+// tslint:disable-next-line: max-classes-per-file
 class WasRun extends TestCase {
   public wasRun: boolean;
+  public wasSetUp: boolean;
 
-  constructor(name) {
+  constructor(name: string) {
     super(name);
-    this.wasRun = false;
   }
 
-  testMethod(): void {
+  public testMethod(): void {
     this.wasRun = true;
+  }
+
+  public setUp(): void {
+    this.wasRun = false;
+    this.wasSetUp = true;
   }
 }
 
+// tslint:disable-next-line: max-classes-per-file
 class TestCaseTest extends TestCase {
-  assert(value: boolean): void {
+  private test: WasRun;
+
+  public setUp(): void {
+    this.test = new WasRun('testMethod');
+  }
+
+  public testRunning(): void {
+    this.test.run();
+    this.assert(this.test.wasRun);
+  }
+
+  public testSetUp(): void {
+    this.test.run();
+    this.assert(this.test.wasSetUp);
+  }
+
+  private assert(value: boolean): void {
     if (value) {
+      // tslint:disable-next-line: no-console
       return console.log('OK');
     }
     throw new Error('Expected true, got false');
   }
-
-  testRunning(): void {
-    const test = new WasRun('testMethod');
-    this.assert(!test.wasRun);
-    test.run();
-    this.assert(test.wasRun);
-  }
 }
 
 new TestCaseTest('testRunning').run();
+new TestCaseTest('testSetUp').run();
