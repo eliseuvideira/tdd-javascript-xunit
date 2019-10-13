@@ -6,17 +6,40 @@
  **  Run multiple tests
  **  Report collected results
  **  [X] Log string in WasRun
+ **  Report failed tests
  */
+// tslint:disable: max-classes-per-file
+
+class TestResult {
+  private runCount: number;
+
+  constructor() {
+    this.runCount = 0;
+  }
+
+  public testStarted(): void {
+    this.runCount += 1;
+  }
+
+  public summary(): string {
+    return `${this.runCount} run, 0 failed`;
+  }
+}
+
 class TestCase {
   public name: string;
   constructor(name: string) {
     this.name = name;
   }
 
-  public run(): void {
+  public run(): TestResult {
+    const result = new TestResult();
+    result.testStarted();
     this.setUp();
     this[this.name]();
     this.tearDown();
+
+    return result;
   }
 
   // tslint:disable-next-line: no-empty
@@ -26,7 +49,6 @@ class TestCase {
   public tearDown(): void {}
 }
 
-// tslint:disable-next-line: max-classes-per-file
 class WasRun extends TestCase {
   public wasRun: boolean;
   public log: string;
@@ -45,19 +67,32 @@ class WasRun extends TestCase {
     this.log = this.log + ' testMethod';
   }
 
+  public testBrokenMethod(): void {
+    throw new Error();
+  }
+
   public tearDown(): void {
     this.log = this.log + ' tearDown';
   }
 }
 
-// tslint:disable-next-line: max-classes-per-file
 class TestCaseTest extends TestCase {
-  private test: WasRun;
-
   public testTemplateMethod(): void {
-    this.test = new WasRun('testMethod');
-    this.test.run();
-    this.assert('setUp testMethod tearDown' === this.test.log);
+    const test = new WasRun('testMethod');
+    test.run();
+    this.assert('setUp testMethod tearDown' === test.log);
+  }
+
+  public testFailedResults(): void {
+    const test = new WasRun('testBrokenMethod');
+    const result = test.run();
+    this.assert('1 run, 1 failed' === result.summary());
+  }
+
+  public testResult(): void {
+    const test = new WasRun('testMethod');
+    const result = test.run();
+    this.assert('1 run, 0 failed' === result.summary());
   }
 
   private assert(value: boolean): void {
@@ -70,3 +105,5 @@ class TestCaseTest extends TestCase {
 }
 
 new TestCaseTest('testTemplateMethod').run();
+new TestCaseTest('testResult').run();
+new TestCaseTest('testFailedResults').run();
